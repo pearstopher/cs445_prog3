@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 # "  iterations of your algorithm with the data points and clusters.
 # "
 class KMeans:
-    def __init__(self, k, display_plot=False):
+    def __init__(self, k, trial=0, display_plot=False, save_image=False):
         # load the data
         self.data = np.loadtxt("./445_cluster_dataset.txt")
         # save the number of points
@@ -28,6 +28,8 @@ class KMeans:
         self.clusters = []
         # print a graph or not?
         self.display_plot = display_plot
+        self.save_image = save_image
+        self.trial = trial
 
     # "Basic K-Means algorithm
     # "  1. Select K points as initial centroids.
@@ -59,7 +61,7 @@ class KMeans:
 
             # plot the updated points
             if self.display_plot:
-                self.plot(self.points, self.clusters)
+                self.plot(self.trial, count, self.save_image)
 
             # "Recompute the centroid of each cluster
             self.old_points = np.copy(self.points)
@@ -98,20 +100,28 @@ class KMeans:
         return error
 
     # for the graphs
-    @staticmethod
-    def plot(points, clusters):
-        for p, c, color in zip(points, clusters,
-                               iter(plt.cm.rainbow(np.linspace(0, 1, len(points))))):
+    def plot(self, trial, run, save_image):
+        # if this is a set of trials,
+        # only make graphs for the first trial in the set
+        if trial != 0:
+            return
+
+        for p, c, color in zip(self.points, self.clusters,
+                               iter(plt.cm.rainbow(np.linspace(0, 1, len(self.points))))):
             np.array(c).reshape(2, -1)
             for a in c:
                 plt.scatter(a[0], a[1], color=color)
-            # print(c)
-            # plt.scatter(c[:0], c[:1], c=color)
             plt.scatter(p[0], p[1], c='black')
 
         plt.xlim([-5, 5])
         plt.ylim([-5, 5])
-        plt.show()
+
+        if save_image:
+            plt.savefig("./images/k" + str(self.k) + "_run" + str(run) + ".png")
+        else:
+            plt.show()
+
+        plt.clf()
 
 
 def main():
@@ -136,7 +146,7 @@ def main():
 
         for j in range(r):
             print("\tRun:", j, "\n\t\t", end="")
-            k = KMeans(k_values[i])
+            k = KMeans(k_values[i], j, display_plot=True, save_image=True)
             k.run()
             error[j] = k.error()
             print("\n\t\tError:", error[j])
