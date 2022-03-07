@@ -17,16 +17,17 @@ import matplotlib.pyplot as plt
 # "  iterations of your algorithm with the data points and clusters.
 # "
 class KMeans:
-    def __init__(self, num_points):
+    def __init__(self, k, display_plot=False):
         # load the data
         self.data = np.loadtxt("./445_cluster_dataset.txt")
-        # self.data = self.data[0:750]  # use less data to save time testing
-        # self.data_x, self.data_y = np.split(self.data, [-1], axis=1)  # Or simply : np.split(Xy,[-1],1)
-        # print(self.data_x)
-        # print(self.data_y)
-
         # save the number of points
-        self.num_points = num_points
+        self.k = k
+        # variables to hold points and clusters
+        self.points = []
+        self.old_points = []
+        self.clusters = []
+        # print a graph or not?
+        self.display_plot = display_plot
 
     # "Basic K-Means algorithm
     # "  1. Select K points as initial centroids.
@@ -38,41 +39,41 @@ class KMeans:
         count = 0
 
         # "Select K points as initial centroids
-        points = np.random.random_sample((self.num_points, 2))
-        points -= 0.5  # center at 0
-        old_points = np.empty((self.num_points, 2))
+        self.points = np.random.random_sample((self.k, 2))
+        self.points -= 0.5  # center at 0
+        self.old_points = np.empty((self.k, 2))
 
         # "repeat until Centroids do not change.
-        while not np.array_equal(old_points, points):
+        while not np.array_equal(self.old_points, self.points):
             count += 1
-            print("Num loops:", count)
+            # display and formatting
+            print("Loop", count, end=" ")
+            if count % 10 == 0:
+                print("\n\t\t", end="")
 
             # "Form K clusters by assigning each point to its closest centroid.
-            clusters = [[] for _ in range(self.num_points)]
-            # clusters = [np.zeros(0) for _ in range(self.num_points)]
+            self.clusters = [[] for _ in range(self.k)]
             for d in self.data:
-                distances = [self.l2(points[i], d) for i in range(self.num_points)]
-                clusters[np.argmin(distances)].append(d)
-                # clusters[np.argmin(distances)] = np.append(clusters[np.argmin(distances)], d)
+                distances = [self.l2(self.points[i], d) for i in range(self.k)]
+                self.clusters[np.argmin(distances)].append(d)
 
             # plot the updated points
-            self.plot(points, clusters)
+            if self.display_plot:
+                self.plot(self.points, self.clusters)
 
             # "Recompute the centroid of each cluster
-            old_points = np.copy(points)
-            for i in range(self.num_points):
-                array_x = np.empty(len(clusters[i]))
-                array_y = np.empty(len(clusters[i]))
-                for j in range(len(clusters[i])):
-                    array_x[j] = clusters[i][j][0]
-                    array_y[j] = clusters[i][j][1]
+            self.old_points = np.copy(self.points)
+            for i in range(self.k):
+                array_x = np.empty(len(self.clusters[i]))
+                array_y = np.empty(len(self.clusters[i]))
+                for j in range(len(self.clusters[i])):
+                    array_x[j] = self.clusters[i][j][0]
+                    array_y[j] = self.clusters[i][j][1]
 
                 # points[i][0] = np.mean(clusters[i][0])
                 # points[i][1] = np.mean(clusters[i][1])
-                points[i][0] = np.mean(array_x)
-                points[i][1] = np.mean(array_y)
-
-
+                self.points[i][0] = np.mean(array_x)
+                self.points[i][1] = np.mean(array_y)
 
         return
 
@@ -86,6 +87,15 @@ class KMeans:
             total += (xi - yi)**2
         total = math.sqrt(total)
         return total
+
+    # "report the sum of squares error for each of these models
+    def error(self):
+        error = 0
+        for point, cluster in zip(self.points, self.clusters):
+            for c in cluster:
+                error += (point[0] - c[0])**2
+                error += (point[1] - c[1])**2
+        return error
 
     # for the graphs
     @staticmethod
@@ -107,9 +117,39 @@ class KMeans:
 def main():
     print("Program 3")
 
-    k = KMeans(10)
+    # "You should have an option to run the algorithm r times
+    # "  from r different randomly chosen initializations
+    # "  (e.g., r = 10)
+    r = 10
 
-    k.run()
+    # "select the solution that gives the lowest sum of squares error
+    # "  over the r runs
+    error = np.empty(r)
+
+    # "Run the algorithm for several different values of K and report
+    # "  the sum of squares error for each of these models.
+    k_values = (2, 3, 5, 10)
+    k_error = np.empty(4)
+
+    for i in range(len(k_values)):
+        print("\nK-value:", k_values[i])
+
+        for j in range(r):
+            print("\tRun:", j, "\n\t\t", end="")
+            k = KMeans(k_values[i])
+            k.run()
+            error[j] = k.error()
+            print("\n\t\tError:", error[j])
+
+        k_error[i] = np.amin(error)
+        print("\tMinimum error for K-value " + str(k_values[i]) + ": " + str(k_error[i]))
+
+    # I guess the error just gets smaller as K gets bigger, no big surprise
+    print("\n\nMinimum error value:", np.amin(k_error))
+    print("This corresponds to a K-value of", k_values[int(np.argmin(k_error))])
+    print("(K, RSS)")
+    for z in zip(k_values, k_error):
+        print(z)
 
 
 if __name__ == '__main__':
