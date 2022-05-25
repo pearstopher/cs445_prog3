@@ -74,13 +74,15 @@ class CMeans:
 
         # hold the previous centers in a separate array
         # (to compare against, for stopping condition)
-        self.old_points = []
+        self.old_points = self.points + 1  # anything not equal to self.points
 
         # repeat (until centroid location points do not change)
-        while not np.array_equal(self.old_points, self.points):
+        # while not np.array_equal(self.old_points, self.points):  # we are never ever ever getting these together
+        while not np.allclose(self.old_points, self.points, rtol=1e-02):
             count += 1
             # display and formatting
             print("Loop", count, end=" ")
+            # print("(", self.points, ")", end=" ")
             if count % 10 == 0:
                 print("\n\t\t", end="")
 
@@ -132,8 +134,12 @@ class CMeans:
             for i, d in enumerate(self.data):
                 self.clusters[np.argmax(self.membership_grades[i])].append(d)
 
-            # plot the updated points
-            if self.display_plot:
+            # plot the updated points (print fewer images at high numbers since it is cpu-intensive)
+            if self.display_plot and \
+                    count < 10 or \
+                    count < 20 and count % 2 == 0 or \
+                    count < 40 and count % 5 == 0 or \
+                    count % 10 == 0:
                 self.plot(self.trial, count, self.save_image)
 
         return
