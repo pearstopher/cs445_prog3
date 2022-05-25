@@ -39,6 +39,7 @@ class CMeans:
         self.points = []
         self.old_points = []
         self.clusters = []
+        self.membership_grades = []
         # print a graph or not?
         self.display_plot = display_plot
         self.save_image = save_image
@@ -65,11 +66,15 @@ class CMeans:
         #
         # create k random values in the range [0,1) for each data point
         # 0 = not a member, 1 = a member
-        membership_grades = [np.random.random_sample(self.k) for _ in self.data]
+        # membership_grades = [np.random.random_sample(self.k) for _ in self.data]
+        self.membership_grades = np.random.rand(len(self.data), self.k)
+
+        # create an empty array of cluster centers
+        self.points = np.empty((self.k, 2))
 
         # hold the previous centers in a separate array
         # (to compare against, for stopping condition)
-        self.old_points = np.empty((self.k, 2))
+        self.old_points = []
 
         # repeat (until centroid location points do not change)
         while not np.array_equal(self.old_points, self.points):
@@ -83,20 +88,19 @@ class CMeans:
             self.old_points = np.copy(self.points)
 
             # "Compute the centroid for each cluster (m-step)
-            self.points = np.empty((self.k, 2))
             # for each cluster center point,
             for i, p in enumerate(self.points):
-                numerator = 0
-                denominator = 0
+                numerator = np.zeros(2)
+                denominator = np.zeros(2)
                 # loop through all of the data
                 for j, d in enumerate(self.data):
                     # and calculate the sums for the equation
-                    denominator += membership_grades[j][i] ** M
-                    numerator = denominator * d
+                    denominator += self.membership_grades[j][i] ** M
+                    numerator += self.membership_grades[j][i] ** M * d
                 # calculate the cluster center
-                p = numerator / denominator
+                p_new = numerator / denominator
                 # and set it in the original array (p is local)
-                self.points[i] = p
+                self.points[i] = p_new
 
             # "for each data point, compute its coefficients/membership
             # "grades for being in the clusters (e-step).
@@ -114,19 +118,19 @@ class CMeans:
                         a = d-c
                         b = d-ck
                         # sigma += self.l2(d - c) / self.l2(d - ck)
-                        sigma = math.sqrt(a[0]**2 + a[1]**2) / (math.sqrt(b[0]**2 + b[1]**2) + 0.0000001)
+                        sigma += math.sqrt(a[0]**2 + a[1]**2) / (math.sqrt(b[0]**2 + b[1]**2) + 0.00001)
                         if sigma == 0:
                             sigma = 0.00001  # division by 0
                     # calculate the denominator
                     denominator = sigma ** (2 / (M - 1))
                     # complete the equation
-                    membership_grades[i][j] = 1 / denominator
+                    self.membership_grades[i][j] = 1 / denominator
 
             # convert the membership grades to clusters to display
             # (highest grade = current cluster membership)
             self.clusters = [[] for _ in range(self.k)]
             for i, d in enumerate(self.data):
-                self.clusters[np.argmax(membership_grades[i])].append(d)
+                self.clusters[np.argmax(self.membership_grades[i])].append(d)
 
             # plot the updated points
             if self.display_plot:
