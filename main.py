@@ -8,6 +8,9 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
+# " m > 1 is a 'fuzzifier' parameter (fix this value during the algorithm)
+M = 1.25
+
 
 # "Assignment #2: Fuzzy C-Means
 # "  Implement the standard version of the fuzzy c-means (FCM) algorithm as described in lecture. As
@@ -41,21 +44,34 @@ class CMeans:
         self.save_image = save_image
         self.trial = trial
 
-    # "Basic K-Means algorithm
-    # "  1. Select K points as initial centroids.
-    # "  2. repeat
-    # "  3.   Form K clusters by assigning each point to its closest centroid.
-    # "  4.   Recompute the centroid of each cluster.
-    # "  5. until Centroids do not change.
+    # "Basic Fuzzy C-Means algorithm
+    # "  1. Choose a number of clusters: C
+    # "  2. Assign coefficients randomly to each data point for being
+    # "     in the clusters (these are the initial membership grades).
+    # "  3. repeat:
+    # "  4.   compute the centroid for each cluster (m-step)
+    # "  5.   for each data point, compute its coefficients/membership
+    # "       grades for being in the clusters (e-step).
+    #
+    # W - membership grades
+    # w_ij - i = 1-n, j=1-c
+    # m - fuzzifier
+    # c - cluster
     def run(self):
         count = 0
 
-        # "Select K points as initial centroids
-        self.points = np.random.random_sample((self.k, 2))
-        self.points -= 0.5  # center at 0
+        # "Assign coefficients randomly to each data point for being
+        # "in the clusters
+        #
+        # create k random values in the range [0,1) for each data point
+        # 0 = not a member, 1 = a member
+        membership_grades = [np.random_sample(self.k) for _ in self.data]
+
+        # hold the previous centers in a separate array
+        # (to compare against, for stopping condition)
         self.old_points = np.empty((self.k, 2))
 
-        # "repeat until Centroids do not change.
+        # repeat (until centroid location points do not change)
         while not np.array_equal(self.old_points, self.points):
             count += 1
             # display and formatting
@@ -63,29 +79,47 @@ class CMeans:
             if count % 10 == 0:
                 print("\n\t\t", end="")
 
-            # "Form K clusters by assigning each point to its closest centroid.
-            self.clusters = [[] for _ in range(self.k)]
-            for d in self.data:
-                distances = [self.l2(self.points[i], d) for i in range(self.k)]
-                self.clusters[np.argmin(distances)].append(d)
+            # save the cluster locations before updating them
+            self.old_points = np.copy(self.points)
+
+            # "Compute the centroid for each cluster (m-step)
+            self.points = np.empty((self.k, 2))
+            # for each cluster center point,
+            for i, p in enumerate(self.points):
+                numerator = 0
+                denominator = 0
+                # loop through all of the data
+                for j, d in enumerate(self.data):
+                    # and calculate the sums for the equation
+                    denominator += membership_grades[j][i] ** M
+                    numerator = denominator * d
+                # calculate the cluster center
+                p = numerator / denominator
+                # and set it in the original array (p is local)
+                self.points[i] = p
+
+            # "for each data point, compute its coefficients/membership
+            # "grades for being in the clusters (e-step).
+            #
+            # loop through each data item
+            for i, d in enumerate(self.data):
+                # loop through each of the clusters
+                for j, c in enumerate(self.points):
+                    # compute the new membership grade
+
+                    # compute the sum
+                    sigma = 0
+                    # (loop through clusters again)
+                    for k, ck in range(self.points):
+                        sigma += abs(d - c) / abs(d - ck)
+                    # calculate the denominator
+                    denominator = sigma ** (2 / (M - 1))
+                    # complete the equation
+                    membership_grades[i][j] = 1 / denominator
 
             # plot the updated points
             if self.display_plot:
                 self.plot(self.trial, count, self.save_image)
-
-            # "Recompute the centroid of each cluster
-            self.old_points = np.copy(self.points)
-            for i in range(self.k):
-                array_x = np.empty(len(self.clusters[i]))
-                array_y = np.empty(len(self.clusters[i]))
-                for j in range(len(self.clusters[i])):
-                    array_x[j] = self.clusters[i][j][0]
-                    array_y[j] = self.clusters[i][j][1]
-
-                # points[i][0] = np.mean(clusters[i][0])
-                # points[i][1] = np.mean(clusters[i][1])
-                self.points[i][0] = np.mean(array_x)
-                self.points[i][1] = np.mean(array_y)
 
         return
 
