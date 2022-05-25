@@ -65,7 +65,7 @@ class CMeans:
         #
         # create k random values in the range [0,1) for each data point
         # 0 = not a member, 1 = a member
-        membership_grades = [np.random_sample(self.k) for _ in self.data]
+        membership_grades = [np.random.random_sample((self.k, 0)) for _ in self.data]
 
         # hold the previous centers in a separate array
         # (to compare against, for stopping condition)
@@ -110,12 +110,23 @@ class CMeans:
                     # compute the sum
                     sigma = 0
                     # (loop through clusters again)
-                    for k, ck in range(self.points):
-                        sigma += abs(d - c) / abs(d - ck)
+                    for k, ck in enumerate(self.points):
+                        a = d-c
+                        b = d-ck
+                        # sigma += self.l2(d - c) / self.l2(d - ck)
+                        sigma = math.sqrt(a[0]**2 + a[1]**2) / (math.sqrt(b[0]**2 + b[1]**2) + 0.0000001)
+                        if sigma == 0:
+                            sigma = 0.00001  # division by 0
                     # calculate the denominator
                     denominator = sigma ** (2 / (M - 1))
                     # complete the equation
                     membership_grades[i][j] = 1 / denominator
+
+            # convert the membership grades to clusters to display
+            # (highest grade = current cluster membership)
+            self.clusters = [[] for _ in range(self.k)]
+            for i, d in enumerate(self.data):
+                self.clusters[np.argmax(membership_grades[i])].append(d)
 
             # plot the updated points
             if self.display_plot:
