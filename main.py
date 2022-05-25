@@ -1,5 +1,7 @@
 # CS445 Program 3
 # Christopher Juncker
+#
+# Fuzzy C-Means
 
 
 import numpy as np
@@ -7,16 +9,24 @@ import math
 import matplotlib.pyplot as plt
 
 
-# "Assignment #1: K-Means
-# "  Implement the standard version of the K-Means algorithm as described in lecture. The initial
-# "  starting points for the K cluster means can be K randomly selected data points. You should
-# "  have an option to run the algorithm r times from r different randomly chosen initializations
-# "  (e.g., r = 10), where you then select the solution that gives the lowest sum of squares error
-# "  over the r runs. Run the algorithm for several different values of K and report the sum of
-# "  squares error for each of these models. Please include a 2-d plot of several different
-# "  iterations of your algorithm with the data points and clusters.
+# "Assignment #2: Fuzzy C-Means
+# "  Implement the standard version of the fuzzy c-means (FCM) algorithm as described in lecture. As
+# "  shown in lecture, the update formulae for the centroids and membership weights are as follows:
 # "
-class KMeans:
+# "    c_k = [ sum_x ( w_k (x)^m x ) ] / [ sum_x ( w_k (x)^m ) ]
+# "
+# "    w_ij = 1 / [ sum_(k=1)^c ( ||x_i - c_j|| / ||x_i - c_k|| )^(2/(m-1)) ]
+# "
+# "  Where m > 1 is a "fuzzifier" parameter (just fix this value during the algorithm – you are welcome to
+# "  experiment by trying different values for different runs of FCM if you wish). Begin by initializing the
+# "  centroids randomly, then compute the weights, update the centroids, recompute the weights, etc. As
+# "  before, you should have an option to run the algorithm r times from r different randomly chosen
+# "  initializations (e.g., r = 10), where you then select the solution that gives the lowest sum of squares
+# "  error over the r runs. Run the algorithm for several different values of K (where K is the number of
+# "  clusters) and report the sum of squares error for each of these models. Please include a 2-d plot of
+# "  several different iterations of your algorithm with the data points and clusters.
+#
+class CMeans:
     def __init__(self, k, trial=0, display_plot=False, save_image=False):
         # load the data
         self.data = np.loadtxt("./445_cluster_dataset.txt")
@@ -146,7 +156,7 @@ def main():
 
         for j in range(r):
             print("\tRun:", j, "\n\t\t", end="")
-            k = KMeans(k_values[i], j, display_plot=True, save_image=True)
+            k = CMeans(k_values[i], j, display_plot=True, save_image=True)
             k.run()
             error[j] = k.error()
             print("\n\t\tError:", error[j])
