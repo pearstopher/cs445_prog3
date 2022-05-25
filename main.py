@@ -65,7 +65,7 @@ class CMeans:
         #
         # create k random values in the range [0,1) for each data point
         # 0 = not a member, 1 = a member
-        membership_grades = [np.random.random_sample((self.k, 0)) for _ in self.data]
+        membership_grades = [np.random.random_sample(self.k) for _ in self.data]
 
         # hold the previous centers in a separate array
         # (to compare against, for stopping condition)
