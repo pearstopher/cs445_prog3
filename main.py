@@ -9,7 +9,7 @@ import math
 import matplotlib.pyplot as plt
 
 # " m > 1 is a 'fuzzifier' parameter (fix this value during the algorithm)
-M = 1.25
+M = 3
 
 
 # "Assignment #2: Fuzzy C-Means
@@ -135,12 +135,15 @@ class CMeans:
                 self.clusters[np.argmax(self.membership_grades[i])].append(d)
 
             # plot the updated points (print fewer images at high numbers since it is cpu-intensive)
-            if self.display_plot and \
-                    count < 10 or \
-                    count < 20 and count % 2 == 0 or \
-                    count < 40 and count % 5 == 0 or \
-                    count % 10 == 0:
+            if self.display_plot and (
+                    count < 10 or
+                    count < 20 and count % 2 == 0 or
+                    count < 40 and count % 5 == 0 or
+                    count % 10 == 0):
                 self.plot(self.trial, count, self.save_image)
+
+        # uncomment to save the final image from each trial
+        # self.plot(self.trial, count, self.save_image)
 
         return
 
@@ -160,8 +163,7 @@ class CMeans:
         error = 0
         for point, cluster in zip(self.points, self.clusters):
             for c in cluster:
-                error += (point[0] - c[0])**2
-                error += (point[1] - c[1])**2
+                error += self.l2(point, c)
         return error
 
     # for the graphs
