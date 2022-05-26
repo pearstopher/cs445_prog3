@@ -95,8 +95,7 @@ class KMeans:
         error = 0
         for point, cluster in zip(self.points, self.clusters):
             for c in cluster:
-                error += (point[0] - c[0])**2
-                error += (point[1] - c[1])**2
+                error += self.l2(point, c)
         return error
 
     # for the graphs
